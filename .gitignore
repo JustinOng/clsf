@@ -1,2 +1,4 @@
 logs/*
 scripts/*
+!scripts/tools.py
+!logs/placeholder

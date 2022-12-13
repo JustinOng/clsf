@@ -7,6 +7,8 @@ from pathlib import Path
 script_dir = Path("scripts")
 log_dir = Path("logs")
 
+ignore = ["tools.py"]
+
 exec_bin = {
     ".py": "/usr/bin/python3"
 }
@@ -42,6 +44,8 @@ async def main():
         print(f'Discovered {len(files)} files:')
         tasks = []
         for file in files:
+            if file in ignore:
+                continue
             script_file_path = script_dir / file
             log_file_path = log_dir / (file + ".txt")
             # print(f'Parsing {script_file_path}')
