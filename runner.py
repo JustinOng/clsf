@@ -40,6 +40,7 @@ async def main():
     while True:
         files = list(os.listdir(script_dir))
         print(f'Discovered {len(files)} files:')
+        tasks = []
         for file in files:
             script_file_path = script_dir / file
             log_file_path = log_dir / (file + ".txt")
@@ -57,8 +58,14 @@ async def main():
             log_file = log_files[file]
 
             runner = exec_bin[suffix]
-            asyncio.create_task(run([runner, script_file_path], log_file))
+            tasks.append((script_file_path, asyncio.create_task(run([runner, script_file_path], log_file))))
         await asyncio.sleep(5)
+        for file, task in tasks:
+            if not task.done():
+                print(f'\u001b[31m{file} did not finish in specified interval!\033[0m')
+                task.cancel()
+
+        print()
 
 if __name__ == "__main__":
     asyncio.run(main())
