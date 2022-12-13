@@ -1,6 +1,6 @@
 import os
 import sys
-import subprocess
+import asyncio
 from datetime import datetime
 from pathlib import Path
 
@@ -21,28 +21,44 @@ print(f'Watching directory {script_dir}/, logs to {log_dir}/')
 
 log_files = {}
 
-def run():
-    files = list(os.listdir(script_dir))
-    print(f'Discovered {len(files)} files:')
-    for file in files:
-        script_file_path = script_dir / file
-        log_file_path = log_dir / (file + ".txt")
-        print(f'Executing {script_file_path}')
-        suffix = script_file_path.suffix
+async def run(args, log_file):
+    print(f'[{args[1]}] Execution at {datetime.now().isoformat()}')
+    log_file.write(f'Execution at {datetime.now().isoformat()}\n')
+    log_file.flush()
 
-        if suffix not in exec_bin:
-            print(f'Failed to execute: No runner specified for {script_file_path}')
-            continue
+    proc = await asyncio.create_subprocess_exec(*args, stdout=log_file, stderr=log_file)
+    retcode = await proc.wait()
 
-        # Open log file if not already open
-        if file not in log_files:
-            log_files[file] = open(log_file_path, "a")
+    if retcode != 0:
+        print(f'[{args[1]}] Done with \u001b[31mnon zero retcode={retcode}\033[0m at {datetime.now().isoformat()}')
+    else:
+        print(f'[{args[1]}] Done with retcode={retcode} at {datetime.now().isoformat()}')
+    log_file.write(f'Done at {datetime.now().isoformat()}\n')
+    log_file.flush()
 
-        log_file = log_files[file]
+async def main():
+    while True:
+        files = list(os.listdir(script_dir))
+        print(f'Discovered {len(files)} files:')
+        for file in files:
+            script_file_path = script_dir / file
+            log_file_path = log_dir / (file + ".txt")
+            # print(f'Parsing {script_file_path}')
+            suffix = script_file_path.suffix
 
-        log_file.write(f'Execution at {datetime.now().isoformat()}\n')
+            if suffix not in exec_bin:
+                print(f'\u001b[31mFailed to execute: No runner specified for {script_file_path}\033[0m')
+                continue
 
-        runner = exec_bin[suffix]
-        subprocess.Popen([runner, script_file_path], stdout=log_file, stderr=log_file)
+            # Open log file if not already open
+            if file not in log_files:
+                log_files[file] = open(log_file_path, "a")
 
-run()
+            log_file = log_files[file]
+
+            runner = exec_bin[suffix]
+            asyncio.create_task(run([runner, script_file_path], log_file))
+        await asyncio.sleep(5)
+
+if __name__ == "__main__":
+    asyncio.run(main())
