@@ -1,4 +1,7 @@
 logs/*
 scripts/*
 !scripts/tools.py
+!scripts/solve_submissions
+scripts/solve_submissions/*
+!scripts/solve_submissions/placeholder
 !logs/placeholder

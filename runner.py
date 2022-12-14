@@ -7,7 +7,7 @@ from pathlib import Path
 script_dir = Path("scripts")
 log_dir = Path("logs")
 
-ignore = ["tools.py"]
+ignore = ["tools.py", "solve_failures"]
 
 exec_bin = {
     ".py": "/usr/bin/python3"
